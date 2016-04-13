@@ -1,7 +1,7 @@
 //! A variant of RwLock with sublocks that can be opened for reading iff the main lock is currently
 //! opened for reading, opened for writing iff the main lock is currently opened for writing.
 
-use std::cell::{ RefCell, Ref, RefMut };
+use std::cell::{ UnsafeCell };
 use std::ops::{ Deref, DerefMut };
 use std::sync::atomic::{ AtomicBool, Ordering };
 use std::sync::{ Arc, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockResult };
@@ -13,7 +13,7 @@ pub struct Liveness {
 }
 
 pub struct SubCell<T> {
-    cell: RefCell<T>,
+    cell: UnsafeCell<T>,
 
     liveness: Arc<Liveness>,
 }
@@ -21,18 +21,18 @@ pub struct SubCell<T> {
 impl<T> SubCell<T> {
     pub fn new<'a>(liveness: &Arc<Liveness>, value: T) -> Self {
         SubCell {
-            cell: RefCell::new(value),
+            cell: UnsafeCell::new(value),
             liveness: liveness.clone(),
         }
     }
-    pub fn borrow(&self) -> Ref<T> {
+    pub fn borrow(&self) -> &T {
         assert!(self.liveness.is_alive.load(Ordering::Relaxed));
-        self.cell.borrow()
+        unsafe { &*self.cell.get() }
     }
 
-    pub fn borrow_mut(&self) -> RefMut<T> {
+    pub fn borrow_mut(&self) -> &mut T {
         assert!(self.liveness.is_mut.load(Ordering::Relaxed));
-        self.cell.borrow_mut()
+        unsafe { &mut *self.cell.get() }
     }
 
 }
@@ -203,3 +203,27 @@ impl<T> MainLock<T> {
         &self.liveness
     }
 }
+
+/*
+// The following test should not build. That's normal.
+#[test]
+fn test_should_not_build() {
+    use std::collections::HashMap;
+    struct State {
+        liveness: Arc<Liveness>,
+        data: HashMap<usize, usize>
+    }
+
+    let main = MainLock::new(|liveness| State {
+        liveness: liveness.clone(),
+        data: HashMap::new(),
+    });
+
+    {
+        let data;
+        {
+            data = &main.read().unwrap().data
+        }
+    }
+}
+*/

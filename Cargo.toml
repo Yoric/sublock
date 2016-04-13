@@ -1,6 +1,6 @@
 [package]
 name = "sublock"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["David Rajchenbach-Teller <dteller@mozilla.com>"]
 description = "Variants of RwLock that support sublocks, opened for reading if the main `RwLock` is opened for reading, opened for writing if the main `RwLock` is opened for writing."
 documentation = "http://yoric.github.io/sublock/doc/sublock/"

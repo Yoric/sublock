@@ -1,23 +1,23 @@
 //! A variant of RwLock with sublocks that can be opened at no cost by providing a proof that the
 //! main lock is opened.
 
-use std::cell::{ RefCell, Ref, RefMut };
+use std::cell::{ UnsafeCell };
 use std::marker::PhantomData;
 use std::sync::{ LockResult, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockResult };
 
 /// A trait specifying that a structure supports immutable borrowing if some proof is provided.
 pub trait ProofBorrow<P, T> {
-    fn borrow<'a>(&'a self, proof: &P) -> Ref<'a, T>;
+    fn borrow<'a>(&'a self, proof: &P) -> &'a T;
 }
 
 
 /// A trait specifying that a structure supports mutable borrowing if some proof is provided.
 pub trait ProofBorrowMut<P, T> {
-    fn borrow_mut<'a>(&'a self, proof: &P) -> RefMut<'a, T>;
+    fn borrow_mut<'a>(&'a self, proof: &P) -> &'a mut T;
 }
 
 pub struct SubCell<T> {
-    cell: RefCell<T>,
+    cell: UnsafeCell<T>,
 
     // The owner has type BigLock<_> and has a unique key equal to `owner_key`.
     owner_key: usize,
@@ -26,30 +26,30 @@ pub struct SubCell<T> {
 impl<T> SubCell<T> {
     pub fn new<'a>(proof: &ProofMut<'a>, value: T) -> Self {
         SubCell {
-            cell: RefCell::new(value),
+            cell: UnsafeCell::new(value),
             owner_key: proof.0,
         }
     }
 }
 
 impl<'b, T> ProofBorrow<Proof<'b>, T> for SubCell<T> {
-    fn borrow<'a>(&'a self, proof: &Proof<'b>) -> Ref<'a, T> {
+    fn borrow<'a>(&'a self, proof: &Proof<'b>) -> &'a T {
         assert_eq!(self.owner_key, proof.0);
-        self.cell.borrow()
+        unsafe { &*self.cell.get() }
     }
 }
 
 impl<'b, T> ProofBorrow<ProofMut<'b>, T> for SubCell<T> {
-    fn borrow<'a>(&'a self, proof: &ProofMut<'b>) -> Ref<'a, T> {
+    fn borrow<'a>(&'a self, proof: &ProofMut<'b>) -> &'a T {
         assert_eq!(self.owner_key, proof.0);
-        self.cell.borrow()
+        unsafe { &*self.cell.get() }
     }
 }
 
 impl<'b, T> ProofBorrowMut<ProofMut<'b>, T> for SubCell<T> {
-    fn borrow_mut<'a>(&'a self, proof: &ProofMut<'b>) -> RefMut<'a, T> {
+    fn borrow_mut<'a>(&'a self, proof: &ProofMut<'b>) -> &'a mut T {
         assert_eq!(self.owner_key, proof.0);
-        self.cell.borrow_mut()
+        unsafe { &mut *self.cell.get() }
     }
 }
 
