@@ -74,7 +74,7 @@ pub type WriteGuard<'a, T> = (ProofMut<'a>, RwLockWriteGuard<'a, T>);
 /// that the main lock is opened.
 ///
 /// ```
-/// use sublock::prooflock::*;
+/// use sublock::sync::prooflock::*;
 /// use std::collections::HashMap;
 ///
 /// type State = HashMap<usize, SubCell<usize>>;

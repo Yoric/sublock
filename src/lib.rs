@@ -1,13 +1,9 @@
-//! Variants of `RwLock` that support sublocks, opened for reading if the main `RwLock` is opened
-//! for reading, opened for writing if the main `RwLock` is opened for writing.
+//! A crate designed to allow batch-locking/batch-unlocking of groups of locks.
 //!
-//! This crate has been designed to permit refactoring of code using `RefCell` into `Sync` code.
+//! This crate was initially designed to permit refactoring of code using `RefCell` into `Sync` code.
 
-/// A variant of `RwLock` based on dynamic checks (comparable to `RefCell`).
-pub mod atomlock;
+// Locks for single-treaded use.
+pub mod cell;
 
-/// A variant of `RwLock` based on proofs of opening. Faster and safer than `atomlock`, but
-/// a bit more verbose.
-pub mod prooflock;
-
-//mod util;
+// Locks for multi-threaded use.
+pub mod sync;

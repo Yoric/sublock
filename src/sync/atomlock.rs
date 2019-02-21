@@ -49,7 +49,7 @@ unsafe impl<T> Sync for SubCell<T> where T: Send + Sync {
 /// opened for reading, opened for writing iff the main lock is currently opened for writing.
 ///
 /// ```
-/// use sublock::atomlock::*;
+/// use sublock::sync::atomlock::*;
 ///
 /// use std::collections::HashMap;
 /// use std::sync::Arc;
