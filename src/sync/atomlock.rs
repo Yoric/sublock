@@ -8,7 +8,10 @@ use std::sync::{ Arc, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard, Tr
 pub use std::sync::LockResult;
 
 pub struct Liveness {
+    /// `true` as long as the `MainLock is acquired, `false` after that.
     is_alive: AtomicBool,
+
+    /// `true` if the `MainLock was acquired mutable, `false` otherwise.
     is_mut: AtomicBool
 }
 
@@ -26,12 +29,13 @@ impl<T> SubCell<T> {
         }
     }
     pub fn borrow(&self) -> &T {
-        assert!(self.liveness.is_alive.load(Ordering::Relaxed));
+        assert!(self.liveness.is_alive.load(Ordering::Relaxed), "Attempting to borrow after the MainLock was released");
         unsafe { &*self.cell.get() }
     }
 
     pub fn borrow_mut(&self) -> &mut T {
-        assert!(self.liveness.is_mut.load(Ordering::Relaxed));
+        assert!(self.liveness.is_alive.load(Ordering::Relaxed), "Attempting to borrow_mut after the MainLock was released.");
+        assert!(self.liveness.is_mut.load(Ordering::Relaxed), "Attempting to borrow_mut but the MainLock was acquired immutably.");
         unsafe { &mut *self.cell.get() }
     }
 
