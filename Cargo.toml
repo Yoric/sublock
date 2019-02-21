@@ -1,8 +1,8 @@
 [package]
 name = "sublock"
-version = "0.1.1"
-authors = ["David Rajchenbach-Teller <dteller@mozilla.com>"]
-description = "Variants of RwLock that support sublocks, opened for reading if the main `RwLock` is opened for reading, opened for writing if the main `RwLock` is opened for writing."
+version = "0.2.0"
+authors = ["David Teller <dteller@mozilla.com>"]
+description = "Variants of RwLock/RefCell that support sublocks, opened for reading if the main `RwLock` is opened for reading, opened for writing if the main `RwLock` is opened for writing."
 documentation = "http://yoric.github.io/sublock/doc/sublock/"
 repository = "https://github.com/Yoric/sublock"
 license = "MPL-2.0"
